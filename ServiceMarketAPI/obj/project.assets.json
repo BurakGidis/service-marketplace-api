@@ -89,11 +89,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\gidis\\ServiceMarketPlace\\service-marketplace-api\\ServiceMarketAPI\\ServiceMarketAPI.csproj",
+      "projectUniqueName": "C:\\Users\\gidis\\OneDrive\\Masaüstü\\service-marketplace-api\\ServiceMarketAPI\\ServiceMarketAPI.csproj",
       "projectName": "ServiceMarketAPI",
-      "projectPath": "C:\\Users\\gidis\\ServiceMarketPlace\\service-marketplace-api\\ServiceMarketAPI\\ServiceMarketAPI.csproj",
+      "projectPath": "C:\\Users\\gidis\\OneDrive\\Masaüstü\\service-marketplace-api\\ServiceMarketAPI\\ServiceMarketAPI.csproj",
       "packagesPath": "C:\\Users\\gidis\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\gidis\\ServiceMarketPlace\\service-marketplace-api\\ServiceMarketAPI\\obj\\",
+      "outputPath": "C:\\Users\\gidis\\OneDrive\\Masaüstü\\service-marketplace-api\\ServiceMarketAPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
