@@ -1,0 +1,6 @@
+@ServiceMarketAPI_HostAddress = http://localhost:5110
+
+GET {{ServiceMarketAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
