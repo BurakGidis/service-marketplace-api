@@ -12,12 +12,14 @@ namespace ServiceMarketAPI.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly JwtTokenService _jwt;
+        
+       
+        private readonly IJwtTokenService _jwt;
 
         public AuthController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            JwtTokenService jwt)
+            IJwtTokenService jwt) 
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -60,6 +62,7 @@ namespace ServiceMarketAPI.Controllers
             if (!ok.Succeeded)
                 return Unauthorized("Invalid credentials");
 
+           
             var token = _jwt.CreateToken(user);
 
             return Ok(new
