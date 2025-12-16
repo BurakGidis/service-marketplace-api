@@ -12,7 +12,7 @@ using ServiceMarketAPI.Data;
 namespace ServiceMarketAPI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251215191749_AddServiceListingsAndSeeding")]
+    [Migration("20251216033731_AddServiceListingsAndSeeding")]
     partial class AddServiceListingsAndSeeding
     {
         /// <inheritdoc />

@@ -39,5 +39,40 @@ namespace ServiceMarketAPI.Controllers
 
             return Ok(new { message = "İlan başarıyla oluşturuldu ve profiliniz Hizmet Veren (Provider) olarak güncellendi." });
         }
+       
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateService(int id, [FromBody] UpdateServiceRequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _service.UpdateListingAsync(id, request, userId);
+
+            if (!result)
+            {
+                return NotFound(new { message = "İlan bulunamadı veya bu işlemi yapmaya yetkiniz yok." });
+            }
+
+            return Ok(new { message = "İlan başarıyla güncellendi." });
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteService(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var result = await _service.DeleteListingAsync(id, userId);
+
+            if (!result)
+            {
+                return NotFound(new { message = "İlan bulunamadı veya silme yetkiniz yok." });
+            }
+
+            return Ok(new { message = "İlan başarıyla silindi." });
+        }
     }
 }

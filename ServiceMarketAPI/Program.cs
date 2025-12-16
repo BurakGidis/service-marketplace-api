@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models; 
 using ServiceMarketAPI.Data;
 using ServiceMarketAPI.Models;
 using ServiceMarketAPI.Services;
@@ -9,32 +10,63 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<IJwtTokenService,JwtTokenService>();
+
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IServiceListingService, ServiceListingService>();
 
 builder.Services.AddControllers();
-
-builder.Services.AddOpenApi();
-
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+
+builder.Services.AddSwaggerGen(option =>
+{
+    option.SwaggerDoc("v1", new OpenApiInfo { Title = "ServiceMarketAPI", Version = "v1" });
+
+    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Lütfen token'ı 'Bearer {token}' formatında giriniz",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+
+    option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
+
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 builder.Services
     .AddIdentityCore<ApplicationUser>(options =>
     {
+        options.User.RequireUniqueEmail = true;
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequireUppercase = false;
         options.Password.RequireLowercase = false;
         options.Password.RequireDigit = false;
         options.Password.RequiredLength = 6;
-        options.User.RequireUniqueEmail = true;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
+
 
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 var issuer = builder.Configuration["Jwt:Issuer"]!;
@@ -60,16 +92,15 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+
 if (app.Environment.IsDevelopment())
 {
-    // OpenAPI JSON endpoint: /openapi/v1.json
-    app.MapOpenApi();
-
-    // Swagger UI: /swagger
+    
+    
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/openapi/v1.json", "ServiceMarketAPI v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ServiceMarketAPI v1");
         c.RoutePrefix = "swagger";
     });
 }

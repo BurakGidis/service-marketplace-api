@@ -7,5 +7,9 @@ namespace ServiceMarketAPI.Services
     {
         Task CreateListingAsync(CreateServiceRequest request, string userId);
         Task<List<Category>> GetAllCategoriesAsync();
+        
+        
+        Task<bool> UpdateListingAsync(int id, UpdateServiceRequest request, string userId);
+        Task<bool> DeleteListingAsync(int id, string userId);
     }
 }
