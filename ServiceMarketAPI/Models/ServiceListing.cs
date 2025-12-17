@@ -29,5 +29,7 @@ namespace ServiceMarketAPI.Models
         public string UserId { get; set; }=string.Empty;
         [ForeignKey("UserId")]
         public ApplicationUser User { get; set; }= null!;
+        
+        public double AverageRating { get; set; } = 0;
     }
 }

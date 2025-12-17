@@ -14,6 +14,11 @@ namespace ServiceMarketAPI.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<ServiceListing> ServiceListings { get; set; }
 
+        public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+
+
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
