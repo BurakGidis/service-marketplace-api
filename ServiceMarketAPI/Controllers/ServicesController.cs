@@ -4,6 +4,7 @@ using ServiceMarketAPI.DTOs.Services;
 using ServiceMarketAPI.Services;
 using System.Security.Claims;
 
+
 namespace ServiceMarketAPI.Controllers
 {
     [ApiController]
@@ -11,6 +12,7 @@ namespace ServiceMarketAPI.Controllers
     public class ServicesController : ControllerBase
     {
         private readonly IServiceListingService _service;
+        
 
         public ServicesController(IServiceListingService service)
         {
@@ -25,14 +27,13 @@ namespace ServiceMarketAPI.Controllers
             return Ok(categories);
         }
 
-        
+
         [HttpPost]
-        [Authorize] 
+        [Authorize]
         public async Task<IActionResult> CreateService([FromBody] CreateServiceRequest request)
         {
-            
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
+
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             await _service.CreateListingAsync(request, userId);
