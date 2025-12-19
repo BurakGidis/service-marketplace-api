@@ -30,7 +30,7 @@ namespace ServiceMarketAPI.Middlewares
 
                 var response = _env.IsDevelopment()
                     ? new { StatusCode = context.Response.StatusCode, Message = ex.Message, StackTrace = ex.StackTrace?.ToString() }
-                    : new { StatusCode = context.Response.StatusCode, Message = "Sunucu hatası oluştu.", StackTrace = "" };
+                    : new { StatusCode = context.Response.StatusCode, Message = "Sunucu hatası oluştu.", StackTrace = (string?)"" };
 
                 var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
                 var json = JsonSerializer.Serialize(response, options);

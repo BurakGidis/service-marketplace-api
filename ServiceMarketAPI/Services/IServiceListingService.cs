@@ -11,5 +11,6 @@ namespace ServiceMarketAPI.Services
         
         Task<bool> UpdateListingAsync(int id, UpdateServiceRequest request, string userId);
         Task<bool> DeleteListingAsync(int id, string userId);
+        Task<List<ServiceListing>> GetAllListingsAsync(ServiceFilterDto filter);
     }
 }
