@@ -75,5 +75,12 @@ namespace ServiceMarketAPI.Controllers
 
             return Ok(new { message = "İlan başarıyla silindi." });
         }
+        [HttpGet]
+        
+        public async Task<IActionResult> GetAllListings([FromQuery] ServiceFilterDto filter)
+        {
+            var listings = await _service.GetAllListingsAsync(filter);
+            return Ok(listings);
+        }
     }
 }
