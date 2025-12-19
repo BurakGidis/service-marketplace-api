@@ -85,5 +85,51 @@ namespace ServiceMarketAPI.Services
 
             return true;
         }
+        public async Task<List<ServiceListing>> GetAllListingsAsync(ServiceFilterDto filter)
+        {
+            
+            var query = _context.ServiceListings
+                .Include(x => x.Category) 
+                .Include(x => x.User)     
+                .AsQueryable();
+
+            
+            if (filter.CategoryId.HasValue)
+            {
+                query = query.Where(x => x.CategoryId == filter.CategoryId.Value);
+            }
+
+            if (!string.IsNullOrEmpty(filter.City))
+            {
+                
+                query = query.Where(x => x.City.ToLower().Contains(filter.City.ToLower()));
+            }
+
+            if (filter.MinPrice.HasValue)
+            {
+                query = query.Where(x => x.Price >= filter.MinPrice.Value);
+            }
+
+            if (filter.MaxPrice.HasValue)
+            {
+                query = query.Where(x => x.Price <= filter.MaxPrice.Value);
+            }
+
+            
+            query = filter.SortBy switch
+            {
+                "price_asc" => query.OrderBy(x => x.Price),            
+                "price_desc" => query.OrderByDescending(x => x.Price), 
+                "rating_desc" => query.OrderByDescending(x => x.AverageRating), 
+                _ => query.OrderByDescending(x => x.CreatedDate)       
+            };
+
+        
+            var skipAmount = (filter.Page - 1) * filter.PageSize;
+            query = query.Skip(skipAmount).Take(filter.PageSize);
+
+            
+            return await query.ToListAsync();
+        }
     }
 }
