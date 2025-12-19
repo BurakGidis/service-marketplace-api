@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ServiceMarketAPI.Data;
@@ -11,9 +12,11 @@ using ServiceMarketAPI.Data;
 namespace ServiceMarketAPI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251216033731_AddServiceListingsAndSeeding")]
+    partial class AddServiceListingsAndSeeding
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -225,36 +228,6 @@ namespace ServiceMarketAPI.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("ServiceMarketAPI.Models.Appointment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CustomerId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ServiceListingId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("ServiceListingId");
-
-                    b.ToTable("Appointments");
-                });
-
             modelBuilder.Entity("ServiceMarketAPI.Models.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -325,34 +298,6 @@ namespace ServiceMarketAPI.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ServiceMarketAPI.Models.Review", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AppointmentId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppointmentId");
-
-                    b.ToTable("Reviews");
-                });
-
             modelBuilder.Entity("ServiceMarketAPI.Models.ServiceListing", b =>
                 {
                     b.Property<int>("Id")
@@ -360,9 +305,6 @@ namespace ServiceMarketAPI.Data.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<double>("AverageRating")
-                        .HasColumnType("double precision");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
@@ -450,36 +392,6 @@ namespace ServiceMarketAPI.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ServiceMarketAPI.Models.Appointment", b =>
-                {
-                    b.HasOne("ServiceMarketAPI.Models.ApplicationUser", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ServiceMarketAPI.Models.ServiceListing", "ServiceListing")
-                        .WithMany()
-                        .HasForeignKey("ServiceListingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("ServiceListing");
-                });
-
-            modelBuilder.Entity("ServiceMarketAPI.Models.Review", b =>
-                {
-                    b.HasOne("ServiceMarketAPI.Models.Appointment", "Appointment")
-                        .WithMany()
-                        .HasForeignKey("AppointmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Appointment");
                 });
 
             modelBuilder.Entity("ServiceMarketAPI.Models.ServiceListing", b =>
