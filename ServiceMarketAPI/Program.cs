@@ -104,6 +104,7 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "swagger";
     });
 }
+app.UseMiddleware<ServiceMarketAPI.Middlewares.ExceptionMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
