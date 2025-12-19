@@ -29,7 +29,7 @@ namespace ServiceMarketAPI.Controllers
 
 
         [HttpPost]
-        [Authorize]
+       [Authorize]
         public async Task<IActionResult> CreateService([FromBody] CreateServiceRequest request)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
