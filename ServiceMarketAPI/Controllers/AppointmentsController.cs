@@ -146,6 +146,31 @@ namespace ServiceMarketAPI.Controllers
             await _context.SaveChangesAsync();
 
             return Ok("Appointment completed.");
+
+        }
+
+        [HttpPost("{id}/cancel")]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (appointment == null) return NotFound();
+
+            
+            if (appointment.CustomerId != userId)
+                return Unauthorized("You cannot cancel an appointment that belongs to someone else.");
+
+            
+            if (appointment.Status == AppointmentStatus.Completed || appointment.Status == AppointmentStatus.Rejected)
+                return BadRequest("This appointment can no longer be cancelled.");
+
+            appointment.Status = AppointmentStatus.Canceled;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Your appointment has been cancelled." });
         }
     }
 }
