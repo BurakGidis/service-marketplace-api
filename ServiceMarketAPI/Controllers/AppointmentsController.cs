@@ -24,10 +24,36 @@ namespace ServiceMarketAPI.Controllers
             _context = context;
         }
 
+        [HttpGet("provider")]
+        public async Task<IActionResult> GetProviderAppointments()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var appointments = await _context.Appointments
+                .Include(a => a.ServiceListing)
+                .Include(a => a.Customer)
+                .Where(a => a.ServiceListing.UserId == userId)
+                .OrderByDescending(a => a.Date)
+                .Select(a => new 
+                {
+                    a.Id,
+                    ServiceName = a.ServiceListing.Title,
+                    CustomerName = a.Customer.UserName,
+                    Date = a.Date,
+                    Status = a.Status.ToString()
+                })
+                .ToListAsync();
+
+            return Ok(appointments);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (request.Date < DateTime.UtcNow)
+                return BadRequest("You cannot schedule an appointment for a past date.");
 
             var isBusy = await _context.Appointments.AnyAsync(a =>
                 a.ServiceListingId == request.ServiceListingId && 
@@ -67,6 +93,9 @@ namespace ServiceMarketAPI.Controllers
             if (appointment.ServiceListing.UserId != userId)
                 return Unauthorized("You do not have the authority to approve this appointment.");
             
+            if (appointment.Status != AppointmentStatus.Pending)
+                return BadRequest($"Only appointments marked 'Pending' can be confirmed. Current situation: {appointment.Status}");
+
             appointment.Status = AppointmentStatus.Approved;
             await _context.SaveChangesAsync();
 
@@ -86,6 +115,9 @@ namespace ServiceMarketAPI.Controllers
 
             if (appointment.ServiceListing.UserId != userId)
                 return Unauthorized();
+
+            if (appointment.Status == AppointmentStatus.Completed)
+                return BadRequest("A completed appointment cannot be rejected.");
 
             appointment.Status = AppointmentStatus.Rejected;
             await _context.SaveChangesAsync();
@@ -107,10 +139,38 @@ namespace ServiceMarketAPI.Controllers
             if (appointment.ServiceListing.UserId != userId)
                 return Unauthorized();
 
+            if (appointment.Status != AppointmentStatus.Approved)
+                return BadRequest("Only approved appointments can be marked as completed.");
+
             appointment.Status = AppointmentStatus.Completed;
             await _context.SaveChangesAsync();
 
             return Ok("Appointment completed.");
+
+        }
+
+        [HttpPost("{id}/cancel")]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (appointment == null) return NotFound();
+
+            
+            if (appointment.CustomerId != userId)
+                return Unauthorized("You cannot cancel an appointment that belongs to someone else.");
+
+            
+            if (appointment.Status == AppointmentStatus.Completed || appointment.Status == AppointmentStatus.Rejected)
+                return BadRequest("This appointment can no longer be cancelled.");
+
+            appointment.Status = AppointmentStatus.Canceled;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Your appointment has been cancelled." });
         }
     }
 }
