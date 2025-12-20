@@ -23,6 +23,29 @@ namespace ServiceMarketAPI.Controllers
         {
             _context = context;
         }
+        
+        [HttpGet("provider")]
+        public async Task<IActionResult> GetProviderAppointments()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var appointments = await _context.Appointments
+                .Include(a => a.ServiceListing)
+                .Include(a => a.Customer)
+                .Where(a => a.ServiceListing.UserId == userId)
+                .OrderByDescending(a => a.Date)
+                .Select(a => new 
+                {
+                    a.Id,
+                    ServiceName = a.ServiceListing.Title,
+                    CustomerName = a.Customer.UserName,
+                    Date = a.Date,
+                    Status = a.Status.ToString()
+                })
+                .ToListAsync();
+
+            return Ok(appointments);
+        }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request)
