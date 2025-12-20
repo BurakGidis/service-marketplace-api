@@ -23,7 +23,7 @@ namespace ServiceMarketAPI.Controllers
         {
             _context = context;
         }
-        
+
         [HttpGet("provider")]
         public async Task<IActionResult> GetProviderAppointments()
         {
@@ -51,6 +51,9 @@ namespace ServiceMarketAPI.Controllers
         public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (request.Date < DateTime.UtcNow)
+                return BadRequest("You cannot schedule an appointment for a past date.");
 
             var isBusy = await _context.Appointments.AnyAsync(a =>
                 a.ServiceListingId == request.ServiceListingId && 
@@ -90,6 +93,9 @@ namespace ServiceMarketAPI.Controllers
             if (appointment.ServiceListing.UserId != userId)
                 return Unauthorized("You do not have the authority to approve this appointment.");
             
+            if (appointment.Status != AppointmentStatus.Pending)
+                return BadRequest($"Only appointments marked 'Pending' can be confirmed. Current situation: {appointment.Status}");
+
             appointment.Status = AppointmentStatus.Approved;
             await _context.SaveChangesAsync();
 
@@ -110,6 +116,9 @@ namespace ServiceMarketAPI.Controllers
             if (appointment.ServiceListing.UserId != userId)
                 return Unauthorized();
 
+            if (appointment.Status == AppointmentStatus.Completed)
+                return BadRequest("A completed appointment cannot be rejected.");
+
             appointment.Status = AppointmentStatus.Rejected;
             await _context.SaveChangesAsync();
 
@@ -129,6 +138,9 @@ namespace ServiceMarketAPI.Controllers
 
             if (appointment.ServiceListing.UserId != userId)
                 return Unauthorized();
+
+            if (appointment.Status != AppointmentStatus.Approved)
+                return BadRequest("Only approved appointments can be marked as completed.");
 
             appointment.Status = AppointmentStatus.Completed;
             await _context.SaveChangesAsync();
