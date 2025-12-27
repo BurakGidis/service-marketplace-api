@@ -42,7 +42,7 @@ namespace ServiceMarketAPI.Controllers
         [HttpPut("me")]
         public async Task<IActionResult> UpdateMe(UpdateMeRequest req)
         {
-            var userId = User.FindFirstValue("userId");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
             var user = await _userManager.FindByIdAsync(userId);
