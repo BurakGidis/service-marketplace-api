@@ -87,7 +87,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
     });
-
+//deneme123
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
