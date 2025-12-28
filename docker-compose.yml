@@ -4,7 +4,7 @@ services:
     container_name: service_market_db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
+      POSTGRES_PASSWORD: 635221
       POSTGRES_DB: ServiceMarketplaceDb
     ports:
       - "5432:5432"
@@ -17,7 +17,7 @@ services:
     container_name: service_market_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL:  
-      PGADMIN_DEFAULT_PASSWORD: 215263
+      PGADMIN_DEFAULT_PASSWORD: 635221
     ports:
       - "5050:80"
     depends_on:
@@ -31,7 +31,7 @@ services:
     container_name: service_market_api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=ServiceMarketplaceDb;Username=postgres;Password=postgres123
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=ServiceMarketplaceDb;Username=postgres;Password=635221
     ports:
       - "8080:8080"
     depends_on:
