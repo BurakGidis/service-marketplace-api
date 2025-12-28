@@ -1,27 +1,19 @@
-
+# --- Derleme Çıktıları ---
 **/bin/
 **/obj/
 
-
+# --- IDE ve Editör Dosyaları ---
 .vs/
 .vscode/
 *.user
 *.suo
-*.opensdf
-*.sdf
 *.cache
 
-
+# --- Hassas Dosyalar (BUNLAR ÖNEMLİ) ---
 **/appsettings.json
 **/appsettings.Development.json
-**/appsettings.Production.json
 
-
+# --- Diğerleri ---
 .DS_Store
 Thumbs.db
-
-
-*.log
-
-
-.env
+.dockerignore
