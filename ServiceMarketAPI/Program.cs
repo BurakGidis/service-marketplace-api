@@ -91,7 +91,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
-
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.Migrate(); 
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Veritabanı migration işlemi sırasında bir hata oluştu.");
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -105,6 +118,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 app.UseMiddleware<ServiceMarketAPI.Middlewares.ExceptionMiddleware>();
+
 
 app.UseAuthentication();
 app.UseAuthorization();
