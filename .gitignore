@@ -1,4 +1,19 @@
-# Build outputs
+# --- Derleme Çıktıları ---
 **/bin/
 **/obj/
+
+# --- IDE ve Editör Dosyaları ---
+.vs/
+.vscode/
+*.user
+*.suo
 *.cache
+
+# --- Hassas Dosyalar (BUNLAR ÖNEMLİ) ---
+**/appsettings.json
+**/appsettings.Development.json
+
+# --- Diğerleri ---
+.DS_Store
+Thumbs.db
+.dockerignore
