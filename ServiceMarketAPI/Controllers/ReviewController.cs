@@ -1,13 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ServiceMarketAPI.Data;
 using ServiceMarketAPI.DTOs.Appointments;
-using ServiceMarketAPI.Models;
+using ServiceMarketAPI.Services;
 using System.Security.Claims;
 
 namespace ServiceMarketAPI.Controllers
@@ -17,11 +11,12 @@ namespace ServiceMarketAPI.Controllers
     [Authorize]
     public class ReviewController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IReviewService _reviewService;
 
-        public ReviewController(ApplicationDbContext context)
+        // Context yerine Service enjekte ediyoruz
+        public ReviewController(IReviewService reviewService)
         {
-            _context = context;
+            _reviewService = reviewService;
         }
 
         [HttpPost]
@@ -29,54 +24,22 @@ namespace ServiceMarketAPI.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var appointment = await _context.Appointments
-                .Include(a => a.ServiceListing)
-                .FirstOrDefaultAsync(a => a.Id == request.AppointmentId); 
-            
-            if (appointment == null) 
-                return NotFound("No appointment found.");
-            
-            if (appointment.CustomerId != userId) 
-                return Unauthorized("Only customers who booked the appointment can leave a review.");
-            
-            if (appointment.Status != AppointmentStatus.Completed) 
-                return BadRequest("No comments can be made before the service is completed.");
-            
-            var existingReview = await _context.Reviews
-                .AnyAsync(r => r.AppointmentId == request.AppointmentId);
-            
-            if (existingReview)
-                return BadRequest("This appointment has already received a review.");
-            
-            var review = new Review
+            // Tüm mantık servise taşındı, sadece sonucu kontrol ediyoruz
+            var result = await _reviewService.AddReviewAsync(request, userId!);
+
+            if (!result.Success)
             {
-                AppointmentId = request.AppointmentId,
-                Rating = request.Rating,
-                Comment = request.Comment ?? string.Empty,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Reviews.Add(review);
-
-            await _context.SaveChangesAsync();
-
-            var allReviews = await _context.Reviews
-                .Include(r => r.Appointment)
-                .Where(r => r.Appointment.ServiceListingId == appointment.ServiceListingId)
-                .ToListAsync();
-            
-            if (allReviews.Any())
-            {
-                double newAverage = allReviews.Average(r => r.Rating);
-
-                appointment.ServiceListing.AverageRating = newAverage;
-
-                await _context.SaveChangesAsync();
+                // Hata mesajına göre uygun durum kodu dönebiliriz, burada genel olarak BadRequest dönüyoruz
+                if (result.Message == "Randevu bulunamadı.")
+                    return NotFound(result.Message);
                 
+                if (result.Message.Contains("yetki")) // "Unauthorized" durumları için basit kontrol
+                    return Unauthorized(result.Message);
+
+                return BadRequest(result.Message);
             }
 
-            return Ok(new { message = "The review has been successfully added and the service rating has been updated." });
-        
+            return Ok(new { message = result.Message });
         }
     }
 }

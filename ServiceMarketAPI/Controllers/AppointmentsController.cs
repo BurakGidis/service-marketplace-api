@@ -1,49 +1,29 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ServiceMarketAPI.Data;
 using ServiceMarketAPI.DTOs.Appointments;
-using ServiceMarketAPI.Models;
+using ServiceMarketAPI.Services;
 using System.Security.Claims;
 
 namespace ServiceMarketAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] //only logined users can be make a transaction 
+    [Authorize]
     public class AppointmentsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IAppointmentService _appointmentService;
 
-        public AppointmentsController(ApplicationDbContext context)
+        // Dependency Injection ile Context yerine Service alıyoruz
+        public AppointmentsController(IAppointmentService appointmentService)
         {
-            _context = context;
+            _appointmentService = appointmentService;
         }
 
         [HttpGet("provider")]
         public async Task<IActionResult> GetProviderAppointments()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            var appointments = await _context.Appointments
-                .Include(a => a.ServiceListing)
-                .Include(a => a.Customer)
-                .Where(a => a.ServiceListing.UserId == userId)
-                .OrderByDescending(a => a.Date)
-                .Select(a => new 
-                {
-                    a.Id,
-                    ServiceName = a.ServiceListing.Title,
-                    CustomerName = a.Customer.UserName,
-                    Date = a.Date,
-                    Status = a.Status.ToString()
-                })
-                .ToListAsync();
-
+            var appointments = await _appointmentService.GetProviderAppointmentsAsync(userId!);
             return Ok(appointments);
         }
 
@@ -51,126 +31,62 @@ namespace ServiceMarketAPI.Controllers
         public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _appointmentService.CreateAppointmentAsync(request, userId!);
 
-            if (request.Date < DateTime.UtcNow)
-                return BadRequest("You cannot schedule an appointment for a past date.");
+            if (!result.Success)
+                return BadRequest(result.Message);
 
-            var isBusy = await _context.Appointments.AnyAsync(a =>
-                a.ServiceListingId == request.ServiceListingId && 
-                a.Date == DateTime.SpecifyKind(request.Date, DateTimeKind.Utc) &&
-                (a.Status == AppointmentStatus.Approved || a.Status == AppointmentStatus.Pending));
-            
-            if (isBusy)
-            {
-                return BadRequest("It is not possible to provide service at the selected date and time.");
-            }
-            var appointment = new Appointment
-            {
-                CustomerId = userId ?? string.Empty,
-                ServiceListingId = request.ServiceListingId,
-                Date = DateTime.SpecifyKind(request.Date, DateTimeKind.Utc),
-                Status = AppointmentStatus.Pending
-            };
-
-            _context.Appointments.Add(appointment);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "An appointment request has been created.", id = appointment.Id });
-
+            return Ok(new { message = result.Message, id = result.AppointmentId });
         }
 
         [HttpPost("{id}/approve")]
         public async Task<IActionResult> Approve(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _appointmentService.ApproveAppointmentAsync(id, userId!);
 
-            var appointment = await _context.Appointments
-                .Include(a => a.ServiceListing)
-                .FirstOrDefaultAsync(a => a.Id == id);
-            
-            if (appointment == null) return NotFound("No appointment found.");
+            if (!result.Success)
+                // Hata mesajına göre NotFound veya BadRequest ayrımı yapılabilir ama 
+                // basitlik adına burada genel olarak BadRequest dönüyoruz.
+                return BadRequest(result.Message);
 
-            if (appointment.ServiceListing.UserId != userId)
-                return Unauthorized("You do not have the authority to approve this appointment.");
-            
-            if (appointment.Status != AppointmentStatus.Pending)
-                return BadRequest($"Only appointments marked 'Pending' can be confirmed. Current situation: {appointment.Status}");
-
-            appointment.Status = AppointmentStatus.Approved;
-            await _context.SaveChangesAsync();
-
-            return Ok("Appointment confirmed.");
+            return Ok(result.Message);
         }
 
         [HttpPost("{id}/reject")]
         public async Task<IActionResult> Reject(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _appointmentService.RejectAppointmentAsync(id, userId!);
 
-            var appointment = await _context.Appointments
-                .Include(a => a.ServiceListing)
-                .FirstOrDefaultAsync(a => a.Id == id);
+            if (!result.Success)
+                return BadRequest(result.Message);
 
-            if (appointment == null) return NotFound();
-
-            if (appointment.ServiceListing.UserId != userId)
-                return Unauthorized();
-
-            if (appointment.Status == AppointmentStatus.Completed)
-                return BadRequest("A completed appointment cannot be rejected.");
-
-            appointment.Status = AppointmentStatus.Rejected;
-            await _context.SaveChangesAsync();
-
-            return Ok("The appointment was rejected.");
+            return Ok(result.Message);
         }
 
         [HttpPost("{id}/complete")]
         public async Task<IActionResult> Complete(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _appointmentService.CompleteAppointmentAsync(id, userId!);
 
-            var appointment = await _context.Appointments
-                .Include(a => a.ServiceListing)
-                .FirstOrDefaultAsync(a => a.Id == id);
+            if (!result.Success)
+                return BadRequest(result.Message);
 
-            if (appointment == null) return NotFound();
-
-            if (appointment.ServiceListing.UserId != userId)
-                return Unauthorized();
-
-            if (appointment.Status != AppointmentStatus.Approved)
-                return BadRequest("Only approved appointments can be marked as completed.");
-
-            appointment.Status = AppointmentStatus.Completed;
-            await _context.SaveChangesAsync();
-
-            return Ok("Appointment completed.");
-
+            return Ok(result.Message);
         }
 
         [HttpPost("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _appointmentService.CancelAppointmentAsync(id, userId!);
 
-            var appointment = await _context.Appointments
-                .FirstOrDefaultAsync(a => a.Id == id);
+            if (!result.Success)
+                return BadRequest(result.Message);
 
-            if (appointment == null) return NotFound();
-
-            
-            if (appointment.CustomerId != userId)
-                return Unauthorized("You cannot cancel an appointment that belongs to someone else.");
-
-            
-            if (appointment.Status == AppointmentStatus.Completed || appointment.Status == AppointmentStatus.Rejected)
-                return BadRequest("This appointment can no longer be cancelled.");
-
-            appointment.Status = AppointmentStatus.Canceled;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Your appointment has been cancelled." });
+            return Ok(new { message = result.Message });
         }
     }
 }
