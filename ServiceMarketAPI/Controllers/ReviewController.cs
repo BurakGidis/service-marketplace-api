@@ -13,7 +13,6 @@ namespace ServiceMarketAPI.Controllers
     {
         private readonly IReviewService _reviewService;
 
-        // Context yerine Service enjekte ediyoruz
         public ReviewController(IReviewService reviewService)
         {
             _reviewService = reviewService;
@@ -24,16 +23,16 @@ namespace ServiceMarketAPI.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Tüm mantık servise taşındı, sadece sonucu kontrol ediyoruz
+          
             var result = await _reviewService.AddReviewAsync(request, userId!);
 
             if (!result.Success)
             {
-                // Hata mesajına göre uygun durum kodu dönebiliriz, burada genel olarak BadRequest dönüyoruz
+              
                 if (result.Message == "Randevu bulunamadı.")
                     return NotFound(result.Message);
                 
-                if (result.Message.Contains("yetki")) // "Unauthorized" durumları için basit kontrol
+                if (result.Message.Contains("yetki")) 
                     return Unauthorized(result.Message);
 
                 return BadRequest(result.Message);
