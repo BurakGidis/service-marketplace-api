@@ -8,12 +8,6 @@
 *.user
 *.suo
 *.cache
-
-# --- Hassas Dosyalar (BUNLAR ÖNEMLİ) ---
-**/appsettings.json
-**/appsettings.Development.json
-
-# --- Diğerleri ---
-.DS_Store
-Thumbs.db
-.dockerignore
+# Hassas veri içeren çevre değişkenleri dosyası
+.env
+service-marketplace-api.env
