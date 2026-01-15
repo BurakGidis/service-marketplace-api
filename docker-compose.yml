@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16
+    container_name: service_market_db
+    environment:
+      POSTGRES_USER: postgres
+      # .env dosyasındaki DB_PASSWORD değerini kullanır
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ServiceMarketplaceDb
+    ports:
+      - "5432:5432"
+    volumes:
+      - service_market_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: service_market_pgadmin
+    environment:
+      # .env dosyasındaki PGADMIN_EMAIL değerini kullanır
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      # .env dosyasındaki PGADMIN_PASSWORD değerini kullanır
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: ServiceMarketAPI/Dockerfile
+    container_name: service_market_api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # Veritabanı bağlantı dizesindeki şifre .env'den gelir
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=ServiceMarketplaceDb;Username=postgres;Password=${DB_PASSWORD}
+      # JWT anahtarı .env'den çevresel değişken olarak aktarılır
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ServiceMarketAPI
+      Jwt__Audience: ServiceMarketUser
+      Jwt__ExpiresMinutes: 60
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  service_market_db_data:

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServiceMarket Canlı Bildirimler</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #333; text-align: center; }
+        .input-group { margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #status { text-align: center; margin-top: 10px; font-weight: bold; }
+        .status-disconnected { color: red; }
+        .status-connected { color: green; }
+        ul { list-style: none; padding: 0; margin-top: 20px; }
+        li { background: #e9ecef; border-left: 5px solid #007bff; margin-bottom: 10px; padding: 15px; border-radius: 4px; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .notification-title { font-weight: bold; color: #007bff; display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔔 Canlı Bildirim Ekranı</h2>
+        
+        <div class="input-group">
+            <label for="tokenInput">Access Token (Swagger'dan kopyalayın):</label>
+            <input type="text" id="tokenInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+            <button onclick="connect()" id="connectBtn">Bildirimleri Dinlemeye Başla</button>
+        </div>
+
+        <div id="status" class="status-disconnected">Bağlantı Bekleniyor...</div>
+        
+        <h3>Gelen Bildirimler:</h3>
+        <ul id="messagesList"></ul>
+    </div>
+
+    <script>
+        let connection = null;
+
+        async function connect() {
+            const token = document.getElementById("tokenInput").value.trim();
+            const btn = document.getElementById("connectBtn");
+            const statusDiv = document.getElementById("status");
+
+            if (!token) { alert("Lütfen Access Token giriniz!"); return; }
+
+           
+            btn.disabled = true;
+            btn.innerText = "Bağlanılıyor...";
+
+          
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/notificationHub", {
+                    accessTokenFactory: () => token 
+                })
+                .withAutomaticReconnect()
+                .build();
+
+           
+            connection.on("ReceiveNotification", function (data) {
+                const li = document.createElement("li");
+                li.innerHTML = `<span class="notification-title">${data.type}</span> ${data.message} <br><small>Randevu ID: ${data.appointmentId}</small>`;
+                document.getElementById("messagesList").prepend(li);
+            });
+
+            try {
+                await connection.start();
+                statusDiv.innerText = "✅ Bağlantı Başarılı! Bildirimler bekleniyor...";
+                statusDiv.className = "status-connected";
+                btn.innerText = "Bağlı";
+                console.log("SignalR Connected.");
+            } catch (err) {
+                statusDiv.innerText = "❌ Hata: " + err.toString();
+                statusDiv.className = "status-disconnected";
+                btn.disabled = false;
+                btn.innerText = "Tekrar Dene";
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
