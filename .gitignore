@@ -2,3 +2,6 @@
 **/bin/
 **/obj/
 *.cache
+# Hassas veri içeren çevre değişkenleri dosyası
+.env
+service-marketplace-api.env
