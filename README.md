@@ -32,7 +32,7 @@ The project supports Docker Compose to spin up the API and Database with a singl
 
 1. Clone the repository:
    
-   git clone [https://github.com/username/repo-name.git](https://github.com/username/repo-name.git)
+   git clone https://github.com/BurakGidis/service-marketplace-api/tree/develop
    cd service-marketplace-api 
 
 2. Create a .env file in the root directory and define the required variables (or use the defaults in docker-compose.yml):
@@ -87,12 +87,12 @@ Name Surname: Enes TAS - 1031510011
 Name Surname: Burakcan GIDIS - 1031510033
 
 ### Project Management
-[Trello/Jira/GitHub Projects] was used for task distribution and tracking during the development process.
+Trello was used for task distribution and tracking during the development process.
 
 Project Board Link: https://trello.com/b/KVLECgXo/servicemarketplace
 
 ### Live Deployment
-The project has been deployed on [Azure / Render / Railway].
+The project has been deployed on Render.
 
 Live API URL: https://isedin.onrender.com/swagger/index.html
 
