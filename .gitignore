@@ -1,6 +1,12 @@
-# Build outputs
+# --- Derleme Çıktıları ---
 **/bin/
 **/obj/
+
+# --- IDE ve Editör Dosyaları ---
+.vs/
+.vscode/
+*.user
+*.suo
 *.cache
 # Hassas veri içeren çevre değişkenleri dosyası
 .env
