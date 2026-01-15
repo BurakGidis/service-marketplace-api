@@ -13,7 +13,6 @@ namespace ServiceMarketAPI.Controllers
     {
         private readonly IAppointmentService _appointmentService;
 
-        // Dependency Injection ile Context yerine Service alıyoruz
         public AppointmentsController(IAppointmentService appointmentService)
         {
             _appointmentService = appointmentService;
@@ -46,8 +45,7 @@ namespace ServiceMarketAPI.Controllers
             var result = await _appointmentService.ApproveAppointmentAsync(id, userId!);
 
             if (!result.Success)
-                // Hata mesajına göre NotFound veya BadRequest ayrımı yapılabilir ama 
-                // basitlik adına burada genel olarak BadRequest dönüyoruz.
+             
                 return BadRequest(result.Message);
 
             return Ok(result.Message);
