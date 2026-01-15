@@ -1,21 +1,27 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR; 
 using ServiceMarketAPI.Data;
 using ServiceMarketAPI.DTOs.Appointments;
 using ServiceMarketAPI.Models;
+using ServiceMarketAPI.Hubs;      
 
 namespace ServiceMarketAPI.Services
 {
     public class AppointmentService : IAppointmentService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<NotificationHub> _hubContext; 
 
-        public AppointmentService(ApplicationDbContext context)
+       
+        public AppointmentService(ApplicationDbContext context, IHubContext<NotificationHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public async Task<List<object>> GetProviderAppointmentsAsync(string userId)
         {
+           
             var appointments = await _context.Appointments
                 .Include(a => a.ServiceListing)
                 .Include(a => a.Customer)
@@ -39,6 +45,13 @@ namespace ServiceMarketAPI.Services
             if (request.Date < DateTime.UtcNow)
                 return (false, "Geçmiş bir tarihe randevu alamazsınız.", null);
 
+            
+            var serviceListing = await _context.ServiceListings
+                .FirstOrDefaultAsync(s => s.Id == request.ServiceListingId);
+            
+            if (serviceListing == null)
+                return (false, "Hizmet bulunamadı.", null);
+
             var isBusy = await _context.Appointments.AnyAsync(a =>
                 a.ServiceListingId == request.ServiceListingId && 
                 a.Date == DateTime.SpecifyKind(request.Date, DateTimeKind.Utc) &&
@@ -57,6 +70,14 @@ namespace ServiceMarketAPI.Services
 
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
+
+        
+            await _hubContext.Clients.User(serviceListing.UserId).SendAsync("ReceiveNotification", new 
+            {
+                Type = "Yeni İş",
+                Message = "Tebrikler! Yeni bir iş teklifi aldınız.",
+                AppointmentId = appointment.Id
+            });
 
             return (true, "Randevu talebi oluşturuldu.", appointment.Id);
         }
@@ -78,11 +99,21 @@ namespace ServiceMarketAPI.Services
             appointment.Status = AppointmentStatus.Approved;
             await _context.SaveChangesAsync();
 
+          
+            await _hubContext.Clients.User(appointment.CustomerId).SendAsync("ReceiveNotification", new 
+            {
+                Type = "Onaylandı",
+                Message = $"'{appointment.ServiceListing.Title}' hizmeti için randevunuz onaylandı!",
+                AppointmentId = appointment.Id
+            });
+
             return (true, "Randevu onaylandı.");
         }
 
+        
         public async Task<(bool Success, string Message)> RejectAppointmentAsync(int id, string userId)
         {
+             
             var appointment = await _context.Appointments
                 .Include(a => a.ServiceListing)
                 .FirstOrDefaultAsync(a => a.Id == id);
@@ -97,12 +128,15 @@ namespace ServiceMarketAPI.Services
 
             appointment.Status = AppointmentStatus.Rejected;
             await _context.SaveChangesAsync();
+            
+            
 
             return (true, "Randevu reddedildi.");
         }
 
         public async Task<(bool Success, string Message)> CompleteAppointmentAsync(int id, string userId)
         {
+            
             var appointment = await _context.Appointments
                 .Include(a => a.ServiceListing)
                 .FirstOrDefaultAsync(a => a.Id == id);
@@ -123,6 +157,7 @@ namespace ServiceMarketAPI.Services
 
         public async Task<(bool Success, string Message)> CancelAppointmentAsync(int id, string userId)
         {
+            // Orijinal kodunuz
             var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == id);
 
             if (appointment == null) return (false, "Randevu bulunamadı.");
